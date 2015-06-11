@@ -1,0 +1,25 @@
+---
+
+  user            : "ubuntu"
+
+  home            : "/home/{{ user }}"
+  pkg_dir         : "{{ home }}/packages"
+  git_dir         : "{{ home }}/git_repo"
+  zsh_dir         : "{{ home }}/.zsh"
+  omz_dir         : "{{ home }}/.oh-my-zsh"
+  atom_dir        : "{{ pkg_dir }}/atom"
+  dyn_dir         : "{{ pkg_dir }}/dyn"
+  solarized_dir   : "{{ git_dir }}/solarized"
+  powerline_dir   : "{{ git_dir }}/powerline"
+  gnome_solar_dir : "{{ git_dir }}/gnome_solarized"
+
+  oh_my_zsh_git   : "git://github.com/robbyrussell/oh-my-zsh.git"
+  solarized_git   : "git://github.com/altercation/solarized.git"
+  powerline_git   : "https://github.com/powerline/fonts.git"
+  gnome_solar_git : "https://github.com/Anthony25/gnome-terminal-colors-solarized"
+
+  install_atom    : "True"
+  atom_deb_url    : "https://atom.io/download/deb"
+
+  install_dyn     : "True"
+  dyn_deb_url     : "http://cdn.dyn.com/dynupdater/dynupdater_amd64.deb"
