@@ -2,91 +2,90 @@
 
   - name: Install updates, patches and additional security software
     apt :
-      upgrade          : "yes"
-      update_cache     : "yes"
-      cache_valid_time : 43200
+        upgrade          : "yes"
+        update_cache     : "yes"
+        cache_valid_time : 43200
     sudo: yes
 
   - name: Install common tools
     apt :
-      name  : "{{ item }}"
-      state : "present"
+        name  : "{{ item }}"
+        state : "present"
     sudo: yes
     with_items:
-      - python
-      - python-dev
-      - git
-      - zsh
-      - vim
-      - openssh-server
-      - keepnote
-      - curl
+        - python
+        - python-dev
+        - git
+        - zsh
+        - vim
+        - openssh-server
+        - keepnote
+        - curl
+        - pep8
+        - python3-pep8
+        - python-flake8
+        - python3-flake8
 
   - name: Create common directory architecture
     file:
-      path  : "{{ item }}"
-      state : "directory"
-      owner : "{{ user }}"
-      group : "{{ user }}"
+        path  : "{{ item }}"
+        state : "directory"
+        owner : "{{ user }}"
+        group : "{{ user }}"
     with_items:
-      - "{{ pkg_dir  }}"
-      - "{{ git_dir  }}"
-      - "{{ zsh_dir  }}"
-      - "{{ atom_dir }}"
-      - "{{ dyn_dir  }}"
+        - "{{ pkg_dir  }}"
+        - "{{ git_dir  }}"
+        - "{{ zsh_dir  }}"
+        - "{{ atom_dir }}"
+        - "{{ dyn_dir  }}"
 
   - name: Ensure github.com is a known host
     lineinfile:
-      dest    : "{{ home }}/.ssh/known_hosts"
-      create  : "yes"
-      state   : "present"
-      line    : "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
-      regexp  : "^github\\.com"
+        dest  : "{{ home }}/.ssh/known_hosts"
+        create: "yes"
+        state : "present"
+        line  : "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
+        regexp: "^github\\.com"
 
   - name: Clone oh-my-zsh
     git :
-      dest : "{{ omz_dir }}"
-      repo : "{{ oh_my_zsh_git }}"
-
-  # - name: Create a blank .zshrc file in home folder
-  #   file:
-  #     path  : "{{ home }}/.zshrc"
-  #     state : "touch"
+        dest : "{{ omz_dir }}"
+        repo : "{{ oh_my_zsh_git }}"
 
   - name: Create a new zsh configuration file
     command: "cp {{ omz_dir }}/templates/zshrc.zsh-template {{ home }}/.zshrc"
-    # copy:
-    #   src  : "{{ omz_dir }}/templates/zshrc.zsh-template"
-    #   dest : "{{ home }}/.zshrc"
-    # using the copy module return a "file not found" exception and stop the play
 
   - name: Change zsh prompt to agnoster
     lineinfile:
-      dest    : "{{ home }}/.zshrc"
-      regexp  : "^ZSH_THEME"
-      line    : 'ZSH_THEME="agnoster"'
-      state   : "present"
+        dest  : "{{ home }}/.zshrc"
+        regexp: "^ZSH_THEME"
+        line  : 'ZSH_THEME="agnoster"'
+        state : "present"
 
   - name: Clone solarized
     git :
-      dest : "{{ solarized_dir }}"
-      repo : "{{ solarized_git }}"
+        dest : "{{ solarized_dir }}"
+        repo : "{{ solarized_git }}"
 
   - name: Clone Gnome solarized terminal color scheme
     git :
-      dest : "{{ gnome_solar_dir }}"
-      repo : "{{ gnome_solar_git }}"
+        dest : "{{ gnome_solar_dir }}"
+        repo : "{{ gnome_solar_git }}"
 
   - name: Install Gnome solarized terminal Dark color scheme
-    command: "{{ gnome_solar_dir }}/set_dark.sh"
+    command: "./set_dark.sh"
+    args:
+        chdir: "{{ gnome_solar_dir }}"
 
   - name: Clone powerline fonts repository
     git :
-      dest : "{{ powerline_dir }}"
-      repo : "{{ powerline_git }}"
+        dest : "{{ powerline_dir }}"
+        repo : "{{ powerline_git }}"
 
   - name: Install powerline fonts
-    command: "{{ powerline_dir }}/install.sh"
+    command: "./install.sh"
+    args:
+        chdir: "{{ powerline_dir }}"
 
   - name: Locate zsh binary path
     command : "which zsh"
@@ -94,38 +93,42 @@
 
   - name: Change user's shell to zsh
     user:
-      name  : "{{ user }}"
-      shell : "{{ zsh_path.stdout }}"
+        name  : "{{ user }}"
+        shell : "{{ zsh_path.stdout }}"
     sudo: yes
 
   - name: Download atom text editor
     get_url:
-      url  : "{{ atom_deb_url }}"
-      dest : "{{ atom_dir }}/atom.deb"
+        url  : "{{ atom_deb_url }}"
+        dest : "{{ atom_dir }}/atom.deb"
     when: ansible_userspace_bits == "64" and {{ install_atom }}
 
   - name: Install atom text editor
     apt :
-      deb : "{{ atom_dir }}/atom.deb"
+        deb : "{{ atom_dir }}/atom.deb"
     sudo: yes
+
+  - name: Install atom plugins
+    command: "apm install {{ item }}"
+    with_items:
+        - linter
+        - linter-pep8
+        - linter-flake8        
 
   - name: Download Dyn updater for linux
     get_url:
-      url  : "{{ dyn_deb_url }}"
-      dest : "{{ dyn_dir }}/dyn.deb"
+        url  : "{{ dyn_deb_url }}"
+        dest : "{{ dyn_dir }}/dyn.deb"
     when: ansible_userspace_bits == "64" and {{ install_dyn }}
 
   - name: Install Dyn updater for linux
     apt :
-      deb : "{{ dyn_dir }}/dyn.deb"
+        deb : "{{ dyn_dir }}/dyn.deb"
     sudo: yes
 
-  - name: Disable "online search" feature from unity
-    command: "gsettings set com.canonical.Unity.Lenses remote-content-search 'none'"
+  # - name: Disable "online search" feature from unity
+  #   command: "gsettings set com.canonical.Unity.Lenses remote-content-search 'none'"
 
   - name: Restart machine in order to effectively change shell
     command: 'shutdown -r now "Ansible updates triggered"'
     sudo: yes
-
-  # - name: Wait for machine to restart
-  #   local_action: wait_for host={{ deploy_target }} state=started
